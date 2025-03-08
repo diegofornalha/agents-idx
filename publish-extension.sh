@@ -14,6 +14,12 @@ function echo_step() {
 
 echo_step "🚀 Iniciando processo de publicação da extensão README Agent..."
 
+# Carregar variáveis do arquivo .env se existir
+if [ -f .env ]; then
+  echo_step "🔑 Carregando configurações do arquivo .env..."
+  export $(grep -v '^#' .env | xargs)
+fi
+
 # Verificar se vsce está instalado
 if ! command -v vsce &> /dev/null; then
   echo_step "⚙️ Instalando vsce globalmente..."
