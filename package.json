@@ -33,8 +33,7 @@
     "vscode": "^1.83.1"
   },
   "categories": [
-    "Other",
-    "Documentation"
+    "Other"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
