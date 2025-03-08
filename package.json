@@ -1,0 +1,80 @@
+{
+  "name": "readme-agent-vsix",
+  "displayName": "README Agent",
+  "description": "Uma extensão de IDE que gera README para pastas usando IA",
+  "version": "0.2.7",
+  "publisher": "diegofornalha",
+  "author": {
+    "name": "Diego Fornalha",
+    "email": "diegofornalha@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diegofornalha/readme-agent.git"
+  },
+  "homepage": "https://github.com/diegofornalha/readme-agent",
+  "license": "MIT",
+  "icon": "resources/icon.png",
+  "galleryBanner": {
+    "color": "#5c2d91",
+    "theme": "dark"
+  },
+  "keywords": [
+    "readme",
+    "documentation",
+    "markdown",
+    "gemini",
+    "ia",
+    "ai",
+    "portugues",
+    "portuguese"
+  ],
+  "engines": {
+    "vscode": "^1.83.1"
+  },
+  "categories": [
+    "Other",
+    "Documentation"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "readmeagent.createFolderReadme",
+          "when": "explorerResourceIsFolder"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "readmeagent.createFolderReadme",
+        "title": "Regras Diego > Gerar README"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "dev": "npm-run-all -p dev:*",
+    "dev:esbuild": "node esbuild.js --watch",
+    "dev:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@google/generative-ai": "^0.10.0",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.83.1",
+    "@typescript-eslint/eslint-plugin": "^7.7.1",
+    "@typescript-eslint/parser": "^7.7.1",
+    "@vscode/vsce": "^2.26.1",
+    "dotenv": "^16.4.5",
+    "esbuild": "^0.20.2",
+    "eslint": "^8.57.0",
+    "istextorbinary": "^9.5.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.4.5"
+  }
+}
