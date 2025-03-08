@@ -25,10 +25,10 @@ NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
 sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" package.json
 echo "🆙 Nova versão: $NEW_VERSION"
 
-# Incrementar versão e compilar nova versão
+# Compilar sem incrementar a versão novamente
 echo "🔨 Compilando nova versão..."
-# Usar --skip-version-bump para evitar que o update-extension.sh tente incrementar a versão novamente
-./update-extension.sh full patch --skip-version-bump
+# Usar "none" como nível de versão para evitar mais incrementos
+./update-extension.sh full none
 
 # Se o comando acima falhar, tentar compilação direta
 if [ $? -ne 0 ]; then

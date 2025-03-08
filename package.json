@@ -2,7 +2,7 @@
   "name": "readme-agent-vsix",
   "displayName": "README Agent",
   "description": "Uma extensão de IDE que gera README para pastas usando IA",
-  "version": "0.2.7",
+  "version": "0.0.6",
   "publisher": "diegofornalha",
   "author": {
     "name": "Diego Fornalha",
