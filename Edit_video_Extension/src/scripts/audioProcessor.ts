@@ -19,6 +19,23 @@ export class AudioProcessor {
       language: config.get('language') || 'pt-BR',
       segments: config.get('segments') || true
     };
+    
+    // Verificar se o ffmpeg está disponível
+    this.checkFfmpeg();
+  }
+  
+  /**
+   * Verifica se o ffmpeg está instalado no sistema
+   */
+  private async checkFfmpeg(): Promise<void> {
+    try {
+      await this.exec('ffmpeg -version');
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'FFmpeg não encontrado. Para usar esta extensão, você precisa instalar o FFmpeg. ' +
+        'Visite https://ffmpeg.org/download.html para instruções de instalação.'
+      );
+    }
   }
 
   /**

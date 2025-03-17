@@ -2,7 +2,7 @@
   "name": "agent-for-youtuber",
   "displayName": "Agent for YouTuber",
   "description": "Transcreve arquivos de áudio e vídeo e gera SEO para YouTube",
-  "version": "0.0.4",
+  "version": "0.1.5",
   "publisher": "diegofornalha",
   "author": {
     "name": "Diego Fornalha",
@@ -38,8 +38,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:audioTranscription.convertTranscribeAndSEO",
-    "onCommand:audioTranscription.preProducao",
     "onLanguage:audio"
   ],
   "main": "./out/scripts/extension.js",
@@ -48,10 +46,6 @@
       {
         "command": "audioTranscription.convertTranscribeAndSEO",
         "title": "Regras Diego > Converter, Transcrever e SEO"
-      },
-      {
-        "command": "audioTranscription.preProducao",
-        "title": "Regras Diego > Pasta Pre Producao"
       }
     ],
     "menus": {
@@ -60,11 +54,6 @@
           "command": "audioTranscription.convertTranscribeAndSEO",
           "group": "audioTranscription@1",
           "when": "resourceExtname =~ /\\.(m4a|wav|ogg|flac|mp4|avi|mov|mkv|webm)$/i && !(resourceExtname =~ /\\.mp3$/i)"
-        },
-        {
-          "command": "audioTranscription.preProducao",
-          "group": "audioTranscription@2",
-          "when": "explorerResourceIsFolder && resourceFilename =~ /^Built-in/"
         }
       ]
     },
@@ -100,8 +89,7 @@
           "type": "string",
           "default": "clickbait",
           "enum": [
-            "clickbait",
-            "educational"
+            "clickbait"
           ],
           "description": "Estilo padrão para geração de SEO"
         }
