@@ -2,7 +2,7 @@
   "name": "agent-for-youtuber",
   "displayName": "Agent for YouTuber",
   "description": "Transcreve arquivos de áudio e vídeo e gera SEO para YouTube",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "diegofornalha",
   "author": {
     "name": "Diego Fornalha",
