@@ -1,0 +1,10 @@
+out
+dist
+node_modules
+.vscode-test/
+*.vsix
+_sandbox
+.env
+.version_temp
+.last_version
+.tmp_vsix/

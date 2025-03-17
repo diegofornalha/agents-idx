@@ -1,0 +1,137 @@
+{
+  "name": "agent-for-youtuber",
+  "displayName": "Agent for YouTuber",
+  "description": "Transcreve arquivos de áudio e vídeo e gera SEO para YouTube",
+  "version": "0.0.3",
+  "publisher": "diegofornalha",
+  "author": {
+    "name": "Diego Fornalha",
+    "email": "diegofornalha@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diegofornalha/youtube-agent.git"
+  },
+  "homepage": "https://github.com/diegofornalha/youtube-agent",
+  "license": "MIT",
+  "icon": "resources/icon.png",
+  "galleryBanner": {
+    "color": "#5c2d91",
+    "theme": "dark"
+  },
+  "keywords": [
+    "youtube",
+    "seo",
+    "audio",
+    "video",
+    "transcription",
+    "gemini",
+    "ia",
+    "ai",
+    "portugues",
+    "portuguese"
+  ],
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:audioTranscription.convertTranscribeAndSEO",
+    "onCommand:audioTranscription.preProducao",
+    "onLanguage:audio"
+  ],
+  "main": "./out/scripts/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "audioTranscription.convertTranscribeAndSEO",
+        "title": "Regras Diego > Converter, Transcrever e SEO"
+      },
+      {
+        "command": "audioTranscription.preProducao",
+        "title": "Regras Diego > Pasta Pre Producao"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "audioTranscription.convertTranscribeAndSEO",
+          "group": "audioTranscription@1",
+          "when": "resourceExtname =~ /\\.(m4a|wav|ogg|flac|mp4|avi|mov|mkv|webm)$/i && !(resourceExtname =~ /\\.mp3$/i)"
+        },
+        {
+          "command": "audioTranscription.preProducao",
+          "group": "audioTranscription@2",
+          "when": "explorerResourceIsFolder && resourceFilename =~ /^Built-in/"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Youtube Agent",
+      "properties": {
+        "audioTranscription.gemini.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Chave de API para Gemini Pro"
+        },
+        "audioTranscription.gemini.preferredModels": {
+          "type": "string",
+          "default": "gemini-1.5-pro,gemini-pro,gemini-1.0-pro",
+          "description": "Lista separada por vírgulas de modelos a serem usados, em ordem de preferência"
+        },
+        "audioTranscription.transcription.language": {
+          "type": "string",
+          "default": "pt-BR",
+          "description": "Idioma para transcrição"
+        },
+        "audioTranscription.transcription.minSilence": {
+          "type": "number",
+          "default": 500,
+          "description": "Duração mínima do silêncio a ser considerado (ms)"
+        },
+        "audioTranscription.transcription.silenceThreshold": {
+          "type": "number",
+          "default": -40,
+          "description": "Limiar para detecção de silêncio (dB)"
+        },
+        "audioTranscription.seo.defaultStyle": {
+          "type": "string",
+          "default": "clickbait",
+          "enum": [
+            "clickbait",
+            "educational"
+          ],
+          "description": "Estilo padrão para geração de SEO"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "dev": "tsc -watch -p ./",
+    "lint": "echo 'Lint check skipped'",
+    "package": "npx @vscode/vsce package",
+    "check-types": "tsc --noEmit",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@google/generative-ai": "^0.1.2",
+    "@types/node": "^16.11.7",
+    "@types/vscode": "^1.60.0",
+    "@typescript-eslint/eslint-plugin": "^5.30.0",
+    "@typescript-eslint/parser": "^5.30.0",
+    "@vscode/vsce": "^2.26.1",
+    "dotenv": "^16.4.5",
+    "esbuild": "^0.20.2",
+    "eslint": "^8.13.0",
+    "istextorbinary": "^9.5.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^4.7.2"
+  },
+  "dependencies": {
+    "axios": "^1.6.2"
+  }
+}
