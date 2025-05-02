@@ -5,6 +5,7 @@ import logging
 import json
 import re
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Optional, List
 
@@ -422,6 +423,113 @@ def organize(recording_dir: Path, files_to_keep):
     except Exception as e:
         console.print(f"[red]✗ Erro ao organizar gravação:[/red] {str(e)}")
         logger.exception("Erro na organização da gravação")
+        raise click.Abort()
+
+@cli.command()
+@click.argument('input_file', type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path))
+@click.option('--style', '-s', 
+              type=click.Choice(['clickbait', 'professional', 'educational', 'neutral']),
+              default='clickbait',
+              help='Estilo do SEO')
+def converter_transcrever_seo(input_file: Path, style: str):
+    """Converte, transcreve e gera SEO para um arquivo de áudio/vídeo em uma só operação.
+    
+    Similar à funcionalidade da extensão VS Code "Agent for YouTuber".
+    """
+    try:
+        from ..core.audio_processor import AudioProcessor
+        from ..utils import file_utils
+        from ..core import transcription, seo_generator
+        import os
+        
+        # 1. Processar o arquivo de entrada (converter para MP3)
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn()
+        ) as progress:
+            task = progress.add_task("[cyan]Processando arquivo...", total=100)
+            
+            # Verificar a extensão do arquivo
+            file_ext = input_file.suffix.lower()
+            mp3_path = input_file
+            
+            # Se não for MP3, converter
+            if file_ext != '.mp3':
+                progress.update(task, advance=10, description="Convertendo para MP3...")
+                
+                # Criar o caminho do arquivo MP3
+                mp3_path = input_file.with_suffix('.mp3')
+                
+                # Verificar se é vídeo ou áudio
+                video_formats = ['.mp4', '.avi', '.mov', '.mkv', '.webm']
+                audio_formats = ['.m4a', '.wav', '.ogg', '.flac']
+                is_video = file_ext in video_formats
+                is_audio = file_ext in audio_formats
+                
+                if not (is_audio or is_video):
+                    console.print(f"[red]✗ Formato não suportado: {file_ext}[/red]")
+                    return
+                
+                if is_video:
+                    # Para vídeo, extrair o áudio usando ffmpeg
+                    cmd = ['ffmpeg', '-i', str(input_file), '-q:a', '0', '-map', 'a', str(mp3_path), '-y']
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    if result.returncode != 0:
+                        console.print(f"[red]✗ Erro ao extrair áudio do vídeo: {result.stderr}[/red]")
+                        return
+                else:
+                    # Para áudio, converter para MP3
+                    cmd = ['ffmpeg', '-i', str(input_file), '-codec:a', 'libmp3lame', '-qscale:a', '2', str(mp3_path), '-y']
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    if result.returncode != 0:
+                        console.print(f"[red]✗ Erro ao converter áudio: {result.stderr}[/red]")
+                        return
+                        
+                console.print(f"[green]✓[/green] Arquivo convertido para MP3: [bold]{mp3_path}[/bold]")
+            
+            # 2. Transcrever o arquivo MP3
+            progress.update(task, advance=40, description="Transcrevendo áudio...")
+            
+            try:
+                text = transcription.transcribe_audio(str(mp3_path))
+                
+                # Salvar a transcrição em arquivo
+                transcription_path = mp3_path.with_suffix('.txt')
+                with open(transcription_path, 'w', encoding='utf-8') as f:
+                    f.write(text)
+                    
+                console.print(f"[green]✓[/green] Transcrição salva em: [bold]{transcription_path}[/bold]")
+                
+                # 3. Gerar SEO
+                progress.update(task, advance=40, description=f"Gerando SEO com estilo '{style}'...")
+                
+                seo_data = seo_generator.generate_seo(text, style=style)
+                
+                # Salvar SEO em arquivo JSON
+                seo_path = mp3_path.with_suffix('-seo.json')
+                with open(seo_path, 'w', encoding='utf-8') as f:
+                    json.dump(seo_data, f, indent=2)
+                
+                console.print(f"[green]✓[/green] SEO salvo em: [bold]{seo_path}[/bold]")
+                
+                # Mostrar resumo
+                console.print("\n[bold cyan]SEO Gerado:[/bold cyan]")
+                console.print(f"Título: [bold]{seo_data['title']}[/bold]")
+                console.print(f"Tags: {', '.join(seo_data['tags'])}")
+                console.print("Descrição:")
+                console.print(seo_data['description'][:200] + "..." if len(seo_data['description']) > 200 else seo_data['description'])
+                
+                progress.update(task, advance=10, description="Concluído!")
+                
+            except Exception as e:
+                console.print(f"[red]✗ Erro ao processar: {str(e)}[/red]")
+                logger.exception("Erro durante processamento")
+                raise click.Abort()
+                
+    except Exception as e:
+        console.print(f"[red]✗ Erro: {str(e)}[/red]")
+        logger.exception("Erro no processamento completo")
         raise click.Abort()
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ import aiohttp
 import asyncio
 from typing import Optional, Dict, List, Any
 from dotenv import load_dotenv
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -99,26 +100,85 @@ class GeminiClient:
         Returns:
             str: Texto transcrito
         """
-        prompt = """
-        Por favor, transcreva o seguinte áudio em português. 
-        Se houver múltiplos falantes, identifique-os quando possível.
-        Se houver seções inaudíveis, indique com [inaudível].
-        Inclua timestamps aproximados a cada 30 segundos no formato [MM:SS].
-        
-        Mantenha a transcrição literal, incluindo repetições, hesitações e palavras incompletas.
-        """
-        
-        # Adicionar conteúdo do áudio no prompt (simplificado)
-        prompt += f"\n\nConteúdo do áudio extraído de: {audio_path}"
-        prompt += "\n\nNote que esse áudio é uma simulação, na implementação real o áudio seria analisado."
+        # Verificar se o arquivo existe
+        if not os.path.exists(audio_path):
+            raise FileNotFoundError(f"Arquivo não encontrado: {audio_path}")
+            
+        # Ler o arquivo de áudio
+        with open(audio_path, 'rb') as f:
+            audio_data = f.read()
+            
+        # Codificar o áudio em base64
+        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
         
         if DEBUG:
-            print(f"Enviando solicitação de transcrição para: {audio_path}")
+            print(f"Enviando áudio para transcrição: {audio_path} ({len(audio_data) / 1024:.2f} KB)")
             
-        response = await self.generate_text(prompt, max_tokens=8192)
-        return response
+        # URL da API Gemini
+        url = f"https://generativelanguage.googleapis.com/v1/models/{self.model}:generateContent"
+        headers = {"Content-Type": "application/json"}
+        params = {"key": self.api_key}
+        
+        # Montar o payload para a API
+        data = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "inlineData": {
+                                "mimeType": "audio/mp3",
+                                "data": audio_base64
+                            }
+                        },
+                        {
+                            "text": "Por favor, transcreva este áudio em português. Formate o texto de maneira limpa e legível, com parágrafos adequados. Inclua apenas a transcrição, sem comentários adicionais."
+                        }
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.2,
+                "topP": 0.8,
+                "topK": 40
+            }
+        }
+        
+        # Fazer a requisição para a API
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, params=params, headers=headers, json=data) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        if DEBUG:
+                            print(f"Erro na API do Gemini ({response.status}): {error_text}")
+                        
+                        # Tentar modelo alternativo
+                        for model in PREFERRED_MODELS[1:]:
+                            if DEBUG:
+                                print(f"Tentando modelo alternativo: {model}")
+                            self.model = model.strip()
+                            # Chamada recursiva com o novo modelo
+                            result = await self.transcribe_audio(audio_path)
+                            if result:  # Se o modelo alternativo funcionou, retorne o resultado
+                                return result
+                        
+                        raise Exception(f"Erro na API do Gemini: {error_text}")
+                    
+                    result = await response.json()
+                    
+                    if "candidates" in result and result["candidates"]:
+                        # Extrair o texto da resposta
+                        text = result["candidates"][0]["content"]["parts"][0]["text"]
+                        return text
+                    
+                    return None
+        except Exception as e:
+            if DEBUG:
+                print(f"Erro ao chamar API do Gemini para transcrição: {str(e)}")
+            raise
 
-    async def generate_seo(self, transcription, style="professional"):
+    async def generate_seo(self, transcription, style="clickbait"):
         """
         Gera SEO para YouTube com base em uma transcrição
         
@@ -130,19 +190,32 @@ class GeminiClient:
             dict: Dados de SEO (título, descrição, tags)
         """
         styles = {
-            "clickbait": "chamativo e que gere muitos cliques",
+            "clickbait": "chamativo e que gere muitos cliques, com títulos que chamam atenção e despertam curiosidade",
             "professional": "profissional e formal",
             "educational": "educativo e informativo",
             "neutral": "neutro e objetivo"
         }
         
-        style_desc = styles.get(style, styles["professional"])
+        style_desc = styles.get(style, styles["clickbait"])
         
+        # Limitar o tamanho da transcrição para evitar erros da API
+        max_length = 16000
+        truncated_transcription = transcription[:max_length] if len(transcription) > max_length else transcription
+        
+        if DEBUG:
+            print(f"Gerando SEO com estilo: {style}")
+            
+        # URL da API Gemini
+        url = f"https://generativelanguage.googleapis.com/v1/models/{self.model}:generateContent"
+        headers = {"Content-Type": "application/json"}
+        params = {"key": self.api_key}
+        
+        # Montar o prompt para a API
         prompt = f"""
-        Com base na seguinte transcrição, gere um pacote completo de SEO para YouTube em um estilo {style_desc}.
+        Baseado nesta transcrição, gere um título, descrição e tags para YouTube. O estilo deve ser {style_desc}.
         
         Transcrição:
-        {transcription[:4000]}...
+        {truncated_transcription}
         
         Retorne apenas um objeto JSON com o seguinte formato:
         {{
@@ -154,25 +227,73 @@ class GeminiClient:
         Não inclua nenhum texto além do JSON. Retorne o JSON válido sem formatação adicional.
         """
         
-        if DEBUG:
-            print(f"Gerando SEO com estilo: {style}")
-            
-        response = await self.generate_text(prompt, max_tokens=4096)
+        # Montar o payload para a API
+        data = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": prompt
+                        }
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.7,
+                "topP": 0.8,
+                "topK": 40,
+                "maxOutputTokens": 4096
+            }
+        }
         
+        # Fazer a requisição para a API
         try:
-            # Limpar a resposta se necessário
-            json_str = response
-            if "```json" in json_str:
-                json_str = json_str.split("```json")[1].split("```")[0].strip()
-            elif "```" in json_str:
-                json_str = json_str.split("```")[1].split("```")[0].strip()
-                
-            return json.loads(json_str)
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, params=params, headers=headers, json=data) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        if DEBUG:
+                            print(f"Erro na API do Gemini ({response.status}): {error_text}")
+                        
+                        # Tentar modelo alternativo
+                        for model in PREFERRED_MODELS[1:]:
+                            if DEBUG:
+                                print(f"Tentando modelo alternativo: {model}")
+                            self.model = model.strip()
+                            result = await self.generate_seo(transcription, style)
+                            if result:  # Se o modelo alternativo funcionou, retorne o resultado
+                                return result
+                        
+                        raise Exception(f"Erro na API do Gemini: {error_text}")
+                    
+                    result = await response.json()
+                    
+                    if "candidates" in result and result["candidates"]:
+                        # Extrair o texto da resposta
+                        response_text = result["candidates"][0]["content"]["parts"][0]["text"]
+                        
+                        # Limpar a resposta se necessário
+                        json_str = response_text
+                        if "```json" in json_str:
+                            json_str = json_str.split("```json")[1].split("```")[0].strip()
+                        elif "```" in json_str:
+                            json_str = json_str.split("```")[1].split("```")[0].strip()
+                        
+                        try:
+                            seo_data = json.loads(json_str)
+                            return seo_data
+                        except json.JSONDecodeError as e:
+                            if DEBUG:
+                                print(f"Erro ao processar JSON de SEO: {str(e)}")
+                                print(f"Resposta recebida: {response_text}")
+                            raise Exception(f"Falha ao processar resposta de SEO: formato JSON inválido")
+                    
+                    return None
         except Exception as e:
             if DEBUG:
-                print(f"Erro ao processar JSON de SEO: {str(e)}")
-                print(f"Resposta recebida: {response}")
-            raise Exception(f"Falha ao processar resposta de SEO: {str(e)}")
+                print(f"Erro ao chamar API do Gemini para SEO: {str(e)}")
+            raise
 
     async def analyze_content(self, transcription: str) -> Dict[str, Any]:
         """Analisa o conteúdo da transcrição para extrair insights"""

@@ -17,6 +17,7 @@ setup(
         "numpy>=1.24.3",
         "moviepy>=1.0.3",
         "ffmpeg-python>=0.2.0",
+        "base64io>=1.0.3",
     ],
     entry_points={
         "console_scripts": [
@@ -27,7 +28,7 @@ setup(
     author="Diego Fornalha",
     author_email="youremail@example.com",
     description="CLI para edição de vídeo com transcrição e geração de SEO",
-    keywords="video, editor, cli, transcription, seo",
+    keywords="video, editor, cli, transcription, seo, gemini",
     url="https://github.com/yourusername/edit_video_cli",
     classifiers=[
         "Programming Language :: Python :: 3",
