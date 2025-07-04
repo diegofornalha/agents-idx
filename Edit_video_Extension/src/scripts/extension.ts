@@ -33,32 +33,32 @@ export function activate(context: vscode.ExtensionContext): void {
               return;
             });
 
-            progress.report({ increment: 0, message: "Iniciando..." });
+            progress.report({ increment: 0, message: 'Iniciando...' });
             
             // Etapa 1: Converter para MP3
-            progress.report({ increment: 5, message: "Convertendo para MP3..." });
+            progress.report({ increment: 5, message: 'Convertendo para MP3...' });
             const mp3Path = await audioProcessor.processAudio(uri.fsPath);
             if (!mp3Path) {
-              vscode.window.showErrorMessage(`Falha ao converter para MP3.`);
+              vscode.window.showErrorMessage('Falha ao converter para MP3.');
               return;
             }
-            progress.report({ increment: 30, message: "Conversão concluída!" });
+            progress.report({ increment: 30, message: 'Conversão concluída!' });
             
             // Etapa 2: Transcrever o áudio
-            progress.report({ increment: 5, message: "Transcrevendo o áudio..." });
+            progress.report({ increment: 5, message: 'Transcrevendo o áudio...' });
             const transcription = await geminiClient.transcribeAudio(mp3Path);
             if (!transcription) {
-              vscode.window.showErrorMessage(`Falha ao transcrever o áudio.`);
+              vscode.window.showErrorMessage('Falha ao transcrever o áudio.');
               return;
             }
             
             // Salvar a transcrição
             const transcriptionPath = mp3Path.replace('.mp3', '.txt');
             fs.writeFileSync(transcriptionPath, transcription);
-            progress.report({ increment: 30, message: "Transcrição concluída!" });
+            progress.report({ increment: 30, message: 'Transcrição concluída!' });
             
             // Etapa 3: Gerar SEO
-            progress.report({ increment: 5, message: "Gerando SEO..." });
+            progress.report({ increment: 5, message: 'Gerando SEO...' });
             
             // Usar sempre o estilo clickbait sem mostrar seleção
             const selectedStyle = 'clickbait';
@@ -66,7 +66,7 @@ export function activate(context: vscode.ExtensionContext): void {
             // Gerar SEO com o estilo selecionado
             const seoData = await geminiClient.generateSEO(transcription, selectedStyle);
             if (!seoData) {
-              vscode.window.showErrorMessage(`Falha ao gerar SEO.`);
+              vscode.window.showErrorMessage('Falha ao gerar SEO.');
               return;
             }
             
@@ -74,7 +74,7 @@ export function activate(context: vscode.ExtensionContext): void {
             const seoPath = transcriptionPath.replace('.txt', '-seo.json');
             fs.writeFileSync(seoPath, JSON.stringify(seoData, null, 2));
             
-            progress.report({ increment: 25, message: "SEO gerado com sucesso!" });
+            progress.report({ increment: 25, message: 'SEO gerado com sucesso!' });
             
             // Abrir os arquivos gerados
             setTimeout(async () => {
@@ -87,7 +87,7 @@ export function activate(context: vscode.ExtensionContext): void {
               await vscode.window.showTextDocument(document, { viewColumn: vscode.ViewColumn.Beside });
             }, 500);
             
-            progress.report({ increment: 5, message: "Concluído!" });
+            progress.report({ increment: 5, message: 'Concluído!' });
             
             // Resumo do título gerado
             vscode.window.showInformationMessage(`Título gerado: ${seoData.title}`);

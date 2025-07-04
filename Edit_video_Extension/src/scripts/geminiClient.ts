@@ -5,9 +5,9 @@ import { GEMINI_API_KEY } from './config';
 
 export class GeminiClient {
   private context: vscode.ExtensionContext;
-  private baseUrl: string = 'https://generativelanguage.googleapis.com/v1beta';
+  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
   private preferredModels: string[] = ['gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro'];
-  private currentModelIndex: number = 0;
+  private currentModelIndex = 0;
   private apiKey: string;
   private transcriptionLanguage: string;
   
@@ -87,11 +87,11 @@ export class GeminiClient {
           const response = await axios.post(url, {
             contents: [
               {
-                role: "user",
+                role: 'user',
                 parts: [
                   {
                     inlineData: {
-                      mimeType: "audio/mp3",
+                      mimeType: 'audio/mp3',
                       data: audioBase64
                     }
                   },
@@ -113,7 +113,7 @@ export class GeminiClient {
             vscode.window.showInformationMessage(`Transcrição concluída com sucesso (${transcription.length} caracteres)`);
             success = true;
           } else {
-            throw new Error("Resposta da API sem conteúdo válido");
+            throw new Error('Resposta da API sem conteúdo válido');
           }
         } catch (error: any) {
           lastError = error instanceof Error ? error : new Error(String(error));
@@ -157,11 +157,11 @@ export class GeminiClient {
    * @param style Estilo de SEO (clickbait, educational)
    * @returns Objeto com título, descrição e tags ou null se houver falha
    */
-  public async generateSEO(transcription: string, style: string = 'clickbait'): Promise<any | null> {
+  public async generateSEO(transcription: string, style = 'clickbait'): Promise<any | null> {
     try {
       const styles: {[key: string]: string} = {
-        clickbait: "atraente e popular, com títulos chamativos que geram muitos cliques",
-        educational: "educacional e detalhado, focado em fornecer valor informativo"
+        clickbait: 'atraente e popular, com títulos chamativos que geram muitos cliques',
+        educational: 'educacional e detalhado, focado em fornecer valor informativo'
       };
       
       const selectedStyle = styles[style] || styles.clickbait;
@@ -169,7 +169,7 @@ export class GeminiClient {
       // Limitar o tamanho da transcrição para evitar erros de tamanho
       const maxLength = 16000;
       const truncatedTranscription = transcription.length > maxLength 
-        ? transcription.substring(0, maxLength) + "... (texto truncado devido ao tamanho)"
+        ? transcription.substring(0, maxLength) + '... (texto truncado devido ao tamanho)'
         : transcription;
       
       vscode.window.showInformationMessage(`Gerando SEO com estilo: ${style}`);
@@ -193,7 +193,7 @@ export class GeminiClient {
           const response = await axios.post(url, {
             contents: [
               {
-                role: "user",
+                role: 'user',
                 parts: [
                   {
                     text: `Baseado nesta transcrição, gere um título, descrição e tags para YouTube. O estilo deve ser ${selectedStyle}. 
@@ -229,10 +229,10 @@ Responda APENAS com um objeto JSON válido no seguinte formato, sem explicaçõe
               vscode.window.showInformationMessage(`SEO gerado com sucesso! Título: "${seoData.title.substring(0, 30)}..."`);
               success = true;
             } else {
-              throw new Error("Formato de resposta inválido");
+              throw new Error('Formato de resposta inválido');
             }
           } else {
-            throw new Error("Resposta da API sem conteúdo válido");
+            throw new Error('Resposta da API sem conteúdo válido');
           }
         } catch (error: any) {
           lastError = error instanceof Error ? error : new Error(String(error));
